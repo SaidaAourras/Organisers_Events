@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId('event_id')->constrained()->onDelete('cascade');
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->boolean('isOrganizer')->default(false);
+            $table->boolean('isSpeaker')->default(false);
             $table->timestamps();
         });
     }

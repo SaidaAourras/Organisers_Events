@@ -7,15 +7,41 @@ use Illuminate\Database\Eloquent\Model;
 
 class Event extends Model
 {
-    protected $fillable = ['title', 'description', 'date_event', 'deleted_at'];
+    use HasFactory;
+
+    protected $fillable = ['title', 'description', 'date_event', 'deleted_at', 'total_places'];
 
     public function users()
     {
-        return $this->belongsToMany(User::class)->withPivot('isOrganizer')->withTimestamps();
+        return $this->belongsToMany(User::class, 'event_user')->withPivot('isOrganizer', 'isSpeaker');
     }
 
-    public function isUserOrganizer(User $user)
+    public function participants()
     {
-        return $this->users()->wherePivot('user_id', $user->id)->wherePivot('isOrganizer', true)->exists();
+        return $this->users()->wherePivot('isOrganizer', false)->wherePivot('isSpeaker', false);
+    }
+
+    public function speakers()
+    {
+        return $this->users()->wherePivot('isSpeaker', true);
+    }
+
+    public function remainingPlaces()
+    {
+        return $this->total_places - $this->participants()->count();
+    }
+
+    public function addParticipant($userId)
+    {
+        if ($this->remainingPlaces() > 0) {
+            $this->users()->attach($userId, ['isOrganizer' => false, 'isSpeaker' => false]);
+            return true;
+        }
+        return false;
+    }
+
+    public function addSpeaker($userId)
+    {
+        $this->users()->attach($userId, ['isSpeaker' => true]);
     }
 }
